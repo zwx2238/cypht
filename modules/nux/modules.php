@@ -107,9 +107,17 @@ class Hm_Handler_nux_homepage_data extends Hm_Handler_Module {
  */
 class Hm_Handler_process_oauth2_authorization extends Hm_Handler_Module {
     public function process() {
-        if (array_key_exists('state', $this->request->get) && $this->request->get['state'] == 'nux_authorization') {
+        if (array_key_exists('state', $this->request->get)) {
+            $details = $this->session->get('nux_add_service_details');
+            $expected_state = is_array($details) ? ($details['oauth_state'] ?? false) : false;
+            if (!valid_nux_oauth2_state($expected_state, $this->request->get['state'])) {
+                Hm_Msgs::add('Invalid OAuth2 state', 'danger');
+                $this->save_hm_msgs();
+                Hm_Dispatch::page_redirect($this->build_page_url('servers'));
+                return;
+            }
+            $this->session->del('nux_add_service_details');
             if (array_key_exists('code', $this->request->get)) {
-                $details = $this->session->get('nux_add_service_details');
                 $oauth2 = new Hm_Oauth2($details['client_id'], $details['client_secret'], $details['redirect_uri']);
                 $result = $oauth2->request_token($details['token_uri'], $this->request->get['code']);
                 if (!empty($result) && array_key_exists('access_token', $result)) {
@@ -122,8 +130,9 @@ class Hm_Handler_process_oauth2_authorization extends Hm_Handler_Module {
                         'pass' => $result['access_token'],
                         'expiration' => strtotime(sprintf("+%d seconds", $result['expires_in'])),
                         'refresh_token' => $result['refresh_token'],
-			'auth' => 'xoauth2',
-			'type' => $details['type']
+                        'oauth_provider' => $details['id'],
+                        'auth' => 'xoauth2',
+                        'type' => $details['type']
                     ));
                     if (isset($details['smtp'])) {
                         Hm_SMTP_List::add(array(
@@ -135,18 +144,14 @@ class Hm_Handler_process_oauth2_authorization extends Hm_Handler_Module {
                             'user' => $details['email'],
                             'pass' => $result['access_token'],
                             'expiration' => strtotime(sprintf("+%d seconds", $result['expires_in'])),
-			    'refresh_token' => $result['refresh_token'],
-			    'type' => 'smtp'
+                            'refresh_token' => $result['refresh_token'],
+                            'oauth_provider' => $details['id'],
+                            'type' => 'smtp'
                         ));
                         $this->session->record_unsaved('SMTP server added');
                     }
-                    if (isPageConfigured('save')) {
-                        Hm_Msgs::add("E-mail account successfully added, To preserve these settings after logout, please go to <a class='alert-link' href='".$this->build_page_url('save')."'>Save Settings</a>.");
-                    } else {
-                        Hm_Msgs::add("E-mail account successfully added.");
-                    }
+                    Hm_Msgs::add("E-mail account successfully added.");
                     Hm_IMAP_List::clean_up();
-                    $this->session->del('nux_add_service_details');
                     $this->session->record_unsaved('IMAP server added');
                     $this->session->secure_cookie($this->request, 'hm_reload_folders', '1');
                     $this->session->close_early();
@@ -217,11 +222,7 @@ class Hm_Handler_process_nux_add_service extends Hm_Handler_Module {
                     Hm_IMAP_List::clean_up();
                     $this->session->record_unsaved('IMAP server added');
                     $this->session->secure_cookie($this->request, 'hm_reload_folders', '1');
-                    if (isPageConfigured('save')) {
-                        Hm_Msgs::add("E-mail account successfully added, To preserve these settings after logout, please go to <a class='alert-link' href='".$this->build_page_url('save')."'>Save Settings</a>.");
-                    } else {
-                        Hm_Msgs::add("E-mail account successfully added.");
-                    }
+                    Hm_Msgs::add("E-mail account successfully added.");
                     $this->session->close_early();
                     $this->out('nux_account_added', true);
                     if ($this->module_is_supported('imap_folders')) {
@@ -260,6 +261,9 @@ class Hm_Handler_process_nux_service extends Hm_Handler_Module {
                 $details['email'] = $form['nux_email'];
                 if (array_key_exists('nux_account_name', $this->request->post) && trim($this->request->post['nux_account_name'])) {
                     $details['name'] = $this->request->post['nux_account_name'];
+                }
+                if (($details['auth'] ?? false) === 'oauth2') {
+                    $details['oauth_state'] = new_nux_oauth2_state();
                 }
                 $this->out('nux_add_service_details', $details);
                 $this->session->set('nux_add_service_details', $details);

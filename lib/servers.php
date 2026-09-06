@@ -124,9 +124,11 @@ trait Hm_Server_Modify {
      * @param int $id server id
      * @param string $pass new password
      * @param int $expiry new password expiration timestamp
+     * @param string|false $refresh_token replacement refresh token, if rotated
+     * @param float|false $refreshed_at local completion time for merge ordering
      * @return bool
      */
-    public static function update_oauth2_token($id, $pass, $expiry) {
+    public static function update_oauth2_token($id, $pass, $expiry, $refresh_token=false, $refreshed_at=false) {
         if (!array_key_exists($id, self::$server_list)) {
             return false;
         }
@@ -138,6 +140,11 @@ trait Hm_Server_Modify {
         }
         self::$server_list[$id]['pass'] = $pass;
         self::$server_list[$id]['expiration'] = $expiry;
+        if (is_string($refresh_token) && $refresh_token !== '') {
+            self::$server_list[$id]['refresh_token'] = $refresh_token;
+        }
+        self::$server_list[$id]['oauth_refreshed_at'] =
+            is_numeric($refreshed_at) ? (float) $refreshed_at : microtime(true);
         self::$server_list[$id]['object'] = false;
         return true;
     }

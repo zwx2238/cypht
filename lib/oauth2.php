@@ -38,13 +38,23 @@ class Hm_Oauth2 {
      * @return string
      */
     public function request_authorization_url($url, $scope, $state, $login_hint = false) {
-        $res = sprintf('%s?response_type=code&amp;scope=%s&amp;state=%s&amp;'.
-            'approval_prompt=force&amp;access_type=offline&amp;client_id=%s&amp;redirect_uri=%s',
-            $url, $scope, $state, $this->client_id, $this->redirect_uri);
+        $params = [
+            'response_type' => 'code',
+            'scope' => $scope,
+            'state' => $state,
+            'prompt' => 'consent',
+            'access_type' => 'offline',
+            'client_id' => $this->client_id,
+            'redirect_uri' => $this->redirect_uri,
+        ];
         if ($login_hint !== false) {
-            $res .= '&amp;login_hint='.$login_hint;
+            $params['login_hint'] = $login_hint;
         }
-        return $res;
+        return sprintf('%s?%s', $url, str_replace(
+            '&',
+            '&amp;',
+            http_build_query($params, '', '&', PHP_QUERY_RFC3986)
+        ));
     }
 
     /**

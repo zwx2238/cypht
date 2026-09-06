@@ -1617,12 +1617,8 @@ class Hm_Handler_process_add_jmap_server extends Hm_Handler_Module {
                     'type' => 'jmap',
                     'port' => false,
                     'tls' => false));
-                if (isPageConfigured('save')) {
-                    Hm_Msgs::add("Added server!. To preserve these settings after logout, please go to <a class='alert-link' href='".$this->build_page_url('save')."'>Save Settings</a>.");
-                    $this->session->record_unsaved('JMAP server added');
-                } else {
-                    Hm_Msgs::add('Added server!');
-                }
+                Hm_Msgs::add('Added server!');
+                $this->session->record_unsaved('JMAP server added');
             }
             else {
                 Hm_Msgs::add('Could not access supplied URL', 'warning');
@@ -1780,12 +1776,8 @@ class Hm_Handler_save_ews_server extends Hm_Handler_Module {
                 ];
                 $this->user_config->set('special_imap_folders', $specials);
             }
-            if (isPageConfigured('save')) {
-                Hm_Msgs::add("EWS server saved. To preserve these settings after logout, please go to <a class='alert-link' href='".$this->build_page_url('save')."'>Save Settings</a>.");
-                $this->session->record_unsaved('EWS server added');
-            } else {
-                Hm_Msgs::add('EWS server saved.');
-            }
+            Hm_Msgs::add('EWS server saved.');
+            $this->session->record_unsaved('EWS server added');
             $this->session->secure_cookie($this->request, 'hm_reload_folders', '1');
         }
     }
@@ -1965,7 +1957,12 @@ class Hm_Handler_imap_oauth2_token_check extends Hm_Handler_Module {
             if ( $server && array_key_exists('auth', $server) && $server['auth'] == 'xoauth2') {
                 $results = imap_refresh_oauth2_token($server, $this->config);
                 if (!empty($results)) {
-                    if (Hm_IMAP_List::update_oauth2_token($server_id, $results[1], $results[0])) {
+                    if (Hm_IMAP_List::update_oauth2_token(
+                        $server_id,
+                        $results[1],
+                        $results[0],
+                        $results[2] ?? false
+                    )) {
                         Hm_Debug::add(sprintf('Oauth2 token refreshed for IMAP server id %s', $server_id), 'info');
                         $updated++;
                     }

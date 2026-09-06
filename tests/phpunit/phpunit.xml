@@ -165,6 +165,12 @@
     <testsuite name="modules_local_contacts">
       <file>./modules/local_contacts/local_contacts.php</file>
     </testsuite>
+    <testsuite name="modules_site">
+      <file>./modules/site/Hm_Test_Local_Agent_Site.php</file>
+    </testsuite>
+    <testsuite name="modules_api_login">
+      <file>./modules/api_login/Hm_Test_Api_Login.php</file>
+    </testsuite>
     <testsuite name="modules_tags">
       <file>./modules/tags/handler_modules.php</file>
       <file>./modules/tags/output_modules.php</file>

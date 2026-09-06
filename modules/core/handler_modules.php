@@ -1237,11 +1237,7 @@ class Hm_Handler_quick_servers_setup extends Hm_Handler_Module {
                     $this->out('imap_service_name', $provider);
                 }
                 $this->out('just_saved_credentials', true);
-                if (isPageConfigured('save')) {
-                    Hm_Msgs::add("Server saved. To preserve these settings after logout, please go to <a class='alert-link' href='".$this->build_page_url('save')."'>Save Settings</a>.");
-                } else {
-                    Hm_Msgs::add("Server saved.");
-                }
+                Hm_Msgs::add("Server saved.");
             }
 
             if ($createProfile && $this->smtp_server_id && ($this->imap_server_id || $this->jmap_server_id)) {
@@ -1270,6 +1266,7 @@ class Hm_Handler_version_upgrade_checker extends Hm_Handler_Module {
 
     public function process()
     {
+        $latestVersion = CYPHT_VERSION;
         if ($this->session->get('latest_version')) {
             $latestVersion = $this->session->get('latest_version');
         } else {

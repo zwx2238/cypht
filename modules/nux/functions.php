@@ -70,11 +70,34 @@ function convert_to_boolean($value) {
 /**
  * @subpackage nux/functions
  */
+if (!hm_exists('new_nux_oauth2_state')) {
+function new_nux_oauth2_state() {
+    return bin2hex(Hm_Functions::random_bytes(32));
+}}
+
+/**
+ * @subpackage nux/functions
+ */
+if (!hm_exists('valid_nux_oauth2_state')) {
+function valid_nux_oauth2_state($expected, $provided) {
+    return is_string($expected) && is_string($provided) &&
+        preg_match('/^[a-f0-9]{64}$/D', $expected) === 1 &&
+        preg_match('/^[a-f0-9]{64}$/D', $provided) === 1 &&
+        hash_equals($expected, $provided);
+}}
+
+/**
+ * @subpackage nux/functions
+ */
 if (!hm_exists('oauth2_form')) {
     function oauth2_form($details, $mod)
     {
+        $state = $details['oauth_state'] ?? false;
+        if (!is_string($state) || preg_match('/^[a-f0-9]{64}$/D', $state) !== 1) {
+            return '';
+        }
         $oauth2 = new Hm_Oauth2($details['client_id'], $details['client_secret'], $details['redirect_uri']);
-        $url = $oauth2->request_authorization_url($details['auth_uri'], $details['scope'], 'nux_authorization', $details['email']);
+        $url = $oauth2->request_authorization_url($details['auth_uri'], $details['scope'], $state, $details['email']);
         $res = '<input type="hidden" name="nux_service" value="' . $mod->html_safe($details['id']) . '" />';
         $res .= '<div class="nux_step_two_title fw-bold">' . $mod->html_safe($details['name']) . '</div><div class="mb-3">';
         $res .= $mod->trans('This provider supports Oauth2 access to your account.');

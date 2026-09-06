@@ -11,11 +11,12 @@ USER_CONFIG_TYPE="${USER_CONFIG_TYPE:-file}"
 USER_SETTINGS_DIR="${USER_SETTINGS_DIR:-/var/lib/hm3/users}"
 ATTACHMENT_DIR="${ATTACHMENT_DIR:-/var/lib/hm3/attachments}"
 
-if [ "${USER_CONFIG_TYPE}" = "file" ]
-then
-    echo "Creating directory for settings ${USER_SETTINGS_DIR}"
-    mkdir -p ${USER_SETTINGS_DIR}
-fi
+case "${USER_CONFIG_TYPE}" in
+    file|custom:*)
+        echo "Creating directory for settings ${USER_SETTINGS_DIR}"
+        mkdir -p ${USER_SETTINGS_DIR}
+        ;;
+esac
 
 echo "Creating directory for attachments ${ATTACHMENT_DIR}"
 mkdir -p ${ATTACHMENT_DIR}

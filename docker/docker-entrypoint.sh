@@ -12,6 +12,21 @@ USER_CONFIG_TYPE="${USER_CONFIG_TYPE:-file}"
 USER_SETTINGS_DIR="${USER_SETTINGS_DIR:-/var/lib/hm3/users}"
 ATTACHMENT_DIR="${ATTACHMENT_DIR:-/var/lib/hm3/attachments}"
 
+if [ -z "${LOCAL_AGENT_AUTH_USERNAME:-}" ]; then
+    echo "LOCAL_AGENT_AUTH_USERNAME is required" >&2
+    exit 1
+fi
+if [ "${#LOCAL_AGENT_AUTH_PASSWORD}" -lt 32 ]; then
+    echo "LOCAL_AGENT_AUTH_PASSWORD must contain at least 32 characters" >&2
+    exit 1
+fi
+if [ "${#API_LOGIN_KEY}" -lt 32 ]; then
+    echo "API_LOGIN_KEY must contain at least 32 characters" >&2
+    exit 1
+fi
+
+mkdir -p /var/lib/hm3
+
 # Wait for database to be ready then setup tables
 ./scripts/setup_database.php
 
@@ -20,12 +35,7 @@ ATTACHMENT_DIR="${ATTACHMENT_DIR:-/var/lib/hm3/attachments}"
 
 # Enable the program in the web-server
 
-if [ "${USER_CONFIG_TYPE}" = "file" ]
-then
-    chown www-data:www-data ${USER_SETTINGS_DIR}
-fi
-
-chown www-data:www-data ${ATTACHMENT_DIR}
+chown -R www-data:www-data /var/lib/hm3
 chown -R www-data:www-data /var/lib/nginx
 
 # When LOG_FILE is set, ensure its directory exists and is writable

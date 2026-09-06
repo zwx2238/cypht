@@ -88,8 +88,13 @@ class Hm_Test_Servers extends TestCase {
         Hm_Server_Wrapper::add(array('user' => 'testuser', 'pass' => 'testpass', 'auth' => 'test', 'name' => 'test', 'server' => 'test', 'port' => 0, 'tls' => 1, 'id' => 'a1'));
         $this->assertFalse(Hm_Server_Wrapper::update_oauth2_token('a1', 'testpass', 3600));
 
-        Hm_Server_Wrapper::add(array('user' => 'testuser', 'pass' => 'testpass', 'auth' => 'xoauth2', 'expiration' => 10, 'name' => 'test', 'server' => 'test', 'port' => 0, 'tls' => 1, 'id' => 'a2'));
-        $this->assertTrue(Hm_Server_Wrapper::update_oauth2_token('a2', 'testpass', 3600));
+        Hm_Server_Wrapper::add(array('user' => 'testuser', 'pass' => 'testpass', 'auth' => 'xoauth2', 'expiration' => 10, 'refresh_token' => 'old-refresh', 'name' => 'test', 'server' => 'test', 'port' => 0, 'tls' => 1, 'id' => 'a2'));
+        $this->assertTrue(Hm_Server_Wrapper::update_oauth2_token('a2', 'new-pass', 3600, 'new-refresh'));
+        $updated = Hm_Server_Wrapper::dump('a2', true);
+        $this->assertEquals('new-pass', $updated['pass']);
+        $this->assertEquals(3600, $updated['expiration']);
+        $this->assertEquals('new-refresh', $updated['refresh_token']);
+        $this->assertIsFloat($updated['oauth_refreshed_at']);
 
     }
     /**

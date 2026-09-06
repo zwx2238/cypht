@@ -7,6 +7,11 @@
 
 if (!defined('DEBUG_MODE')) { die(); }
 
+function valid_api_login_key($expected, $provided) {
+    return is_string($expected) && $expected !== '' &&
+        is_string($provided) && hash_equals($expected, $provided);
+}
+
 /**
  * @subpackage api_login/handler
  */
@@ -16,7 +21,9 @@ class Hm_Handler_api_login_step_two extends Hm_Handler_login {
         if (!$success) {
             return;
         }
-        if ($form['api_login_key'] != $this->config->get('api_login_key')) {
+        $expected = (string) $this->config->get('api_login_key');
+        $provided = $form['api_login_key'] ?? null;
+        if (!valid_api_login_key($expected, $provided)) {
             return;
         }
         list($secure, $path, $domain) = $this->session->set_session_params($this->request);
@@ -31,8 +38,9 @@ class Hm_Handler_api_login_step_two extends Hm_Handler_login {
  */
 class Hm_Handler_process_api_login extends Hm_Handler_login {
     public function process() {
-        if (array_key_exists('api_login_key', $this->request->post) &&
-            $this->request->post['api_login_key'] == $this->config->get('api_login_key')) {
+        $expected = (string) $this->config->get('api_login_key');
+        $provided = $this->request->post['api_login_key'] ?? null;
+        if (valid_api_login_key($expected, $provided)) {
             $this->validate_request = false;
         }
         parent::process();

@@ -901,10 +901,14 @@ function imap_refresh_oauth2_token($server, $config) {
     if ((int) $server['expiration'] <= time()) {
         $oauth2_data = get_oauth2_data($config);
         $details = array();
-        if ($server['server'] == 'imap.gmail.com') {
+        $provider = $server['oauth_provider'] ?? false;
+        if ($provider && array_key_exists($provider, $oauth2_data)) {
+            $details = $oauth2_data[$provider];
+        }
+        elseif ($server['server'] == 'imap.gmail.com') {
             $details = $oauth2_data['gmail'];
         }
-        elseif ($server['server'] == 'imap-mail.outlook.com') {
+        elseif (in_array($server['server'], ['imap-mail.outlook.com', 'outlook.office365.com'], true)) {
             $details = $oauth2_data['outlook'];
         }
         elseif ($server['server'] == 'imap-mail.office365.com') {
@@ -914,7 +918,11 @@ function imap_refresh_oauth2_token($server, $config) {
             $oauth2 = new Hm_Oauth2($details['client_id'], $details['client_secret'], $details['client_uri']);
             $result = $oauth2->refresh_token($details['refresh_uri'], $server['refresh_token']);
             if (array_key_exists('access_token', $result)) {
-                return array(strtotime(sprintf('+%d seconds', $result['expires_in'])), $result['access_token']);
+                return array(
+                    strtotime(sprintf('+%d seconds', $result['expires_in'])),
+                    $result['access_token'],
+                    $result['refresh_token'] ?? false
+                );
             }
         }
     }

@@ -49,12 +49,7 @@ class Hm_Handler_update_search extends Hm_Handler_Module {
                 $this->user_config->set('saved_searches', $searches->dump());
                 $this->session->set('user_data', $this->user_config->dump());
                 $this->out('updated_search', true);
-                if (isPageConfigured('save')) {
-                    Hm_Msgs::add("Saved search updated. To preserve your searches after logout, please go to <a class='alert-link' href='".$this->build_page_url('save')."'>Save Settings</a>.", 'info');
-                }
-                else {
-                    Hm_Msgs::add('Saved search updated', 'info');
-                }
+                Hm_Msgs::add('Saved search updated', 'info');
             }
             else {
                 Hm_Msgs::add('Unable to update the search parameters', 'danger');
@@ -116,12 +111,7 @@ class Hm_Handler_save_search extends Hm_Handler_Module {
                 $this->user_config->set('saved_searches', $searches->dump());
                 $this->session->set('user_data', $this->user_config->dump());
                 $this->out('saved_search', true);
-                if (isPageConfigured('save')) {
-                    Hm_Msgs::add("Saved search updated. To preserve your searches after logout, please go to <a class='alert-link' href='".$this->build_page_url('save')."'>Save Settings</a>.", 'info');
-                }
-                else {
-                    Hm_Msgs::add('Search saved', 'success');
-                }
+                Hm_Msgs::add('Search saved', 'success');
             }
             else {
                 Hm_Msgs::add('You already have a search by that name', 'warning');
@@ -155,12 +145,7 @@ class Hm_Handler_save_advanced_search extends Hm_Handler_Module {
                 $this->user_config->set('saved_searches', $searches->dump());
                 $this->session->set('user_data', $this->user_config->dump());
                 $this->out('saved_advanced_search', true);
-                if (isPageConfigured('save')) {
-                    Hm_Msgs::add("Advanced search saved. To preserve your searches after logout, please go to <a class='alert-link' href='".$this->build_page_url('save')."'>Save Settings</a>.", 'success');
-                }
-                else {
-                    Hm_Msgs::add('Advanced search saved', 'success');
-                }
+                Hm_Msgs::add('Advanced search saved', 'success');
             }
             else {
                 Hm_Msgs::add('Failed to save advanced search - name already exists', 'danger');
@@ -209,12 +194,7 @@ class Hm_Handler_update_advanced_search extends Hm_Handler_Module {
                 $this->user_config->set('saved_searches', $searches->dump());
                 $this->session->set('user_data', $this->user_config->dump());
                 $this->out('updated_advanced_search', true);
-                if (isPageConfigured('save')) {
-                    Hm_Msgs::add("Advanced search updated. To preserve your searches after logout, please go to <a class='alert-link' href='".$this->build_page_url('save')."'>Save Settings</a>.", 'info');
-                }
-                else {
-                    Hm_Msgs::add('Advanced search updated', 'info');
-                }
+                Hm_Msgs::add('Advanced search updated', 'info');
             }
             else {
                 Hm_Msgs::add('Unable to update the advanced search parameters', 'danger');
