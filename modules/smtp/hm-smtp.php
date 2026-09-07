@@ -297,8 +297,8 @@ class Hm_SMTP {
         }
         $this->debug[] = 'Connecting to '.$server.' on port '.$this->port;
         $ctx = stream_context_create();
-        stream_context_set_option($ctx, 'ssl', 'verify_peer_name', false);
-        stream_context_set_option($ctx, 'ssl', 'verify_peer', false);
+        stream_context_set_option($ctx, 'ssl', 'verify_peer_name', true);
+        stream_context_set_option($ctx, 'ssl', 'verify_peer', true);
         $this->handle = Hm_Functions::stream_socket_client($server, $this->port, $errorno, $errorstr, 30, STREAM_CLIENT_CONNECT, $ctx);
         if (is_resource($this->handle)) {
             $this->debug[] = 'Successfully opened port to the SMTP server';
@@ -311,20 +311,24 @@ class Hm_SMTP {
             // Log technical details for debugging
             error_log("SMTP connection failed to {$this->server}:{$this->port} - Error #{$errorno}: {$errorstr}");
             $result = "Unable to connect to the SMTP server. Please check your internet connection or server settings, and try again.";
+            return $this->connection_failure($result);
         }
         $this->banner = $this->get_response();
         $command = 'EHLO '.$this->hostname;
         $this->send_command($command);
         $response = $this->get_response();
         $this->capabilities($response);
-        if ($this->starttls && $this->supports_tls) {
+        if ($this->starttls && !$this->supports_tls) {
+            return $this->connection_failure('The SMTP server does not support the required STARTTLS connection.');
+        }
+        if ($this->starttls) {
             $command = 'STARTTLS';
             $this->send_command($command);
             $response = $this->get_response();
             if ($this->compare_response($response, '220') != 0) {
                 // Log technical details for debugging
                 error_log("SMTP STARTTLS command failed. Expected 220, got: " . print_r($response, true));
-                $result = "We couldn't secure the connection to the SMTP server (STARTTLS failed). Please try again later.";
+                return $this->connection_failure("We couldn't secure the connection to the SMTP server (STARTTLS failed). Please try again later.");
             }
             if(isset($certfile) && $certfile) {
                 stream_context_set_option($this->handle, 'tls', 'local_cert', $certfile);
@@ -332,7 +336,9 @@ class Hm_SMTP {
                     stream_context_set_option($this->handle, 'tls', 'passphrase', $certpass);
                 }
             }
-            Hm_Functions::stream_socket_enable_crypto($this->handle, get_tls_stream_type());
+            if (Hm_Functions::stream_socket_enable_crypto($this->handle, get_tls_stream_type()) !== true) {
+                return $this->connection_failure('Unable to establish a verified TLS connection to the SMTP server.');
+            }
             $command = 'EHLO '.$this->hostname;
             $this->send_command($command);
             $response = $this->get_response();
@@ -358,6 +364,17 @@ class Hm_SMTP {
             }
         }
         return $result;
+    }
+
+    private function connection_failure($message) {
+        $this->debug[] = $message;
+        if (is_resource($this->handle)) {
+            fclose($this->handle);
+        }
+        $this->handle = false;
+        $this->connected = false;
+        $this->state = 'disconnected';
+        return $message;
     }
 
     function choose_auth() {

@@ -273,6 +273,9 @@ class Hm_Functions {
     public static $exec_res = '{"unit":"test"}';
     public static $filter_failure = false;
     public static $no_stream = false;
+    public static $stream_factory = null;
+    public static $stream_context = [];
+    public static $crypto_result = true;
     public static function setcookie($name, $value, $lifetime=0, $path='', $domain='', $html_only='') { return true; }
     public static function header($header) { return true; }
     public static function cease() { return true; }
@@ -327,8 +330,12 @@ class Hm_Functions {
         }
     }
     public static function stream_socket_client($server, $port, &$errno, &$errstr, $timeout, $mode, $ctx) {
+        self::$stream_context = stream_context_get_options($ctx);
         if (self::$no_stream) {
             return false;
+        }
+        if (is_callable(self::$stream_factory)) {
+            return (self::$stream_factory)();
         }
         if (!in_array('foo', stream_get_wrappers(), true)) {
             stream_wrapper_register('foo', 'Fake_IMAP_Server');
@@ -344,7 +351,7 @@ class Hm_Functions {
         return false;
     }
     public static function stream_socket_enable_crypto($socket, $type) {
-        return true;
+        return self::$crypto_result;
     }
 }
 function setup_db($config) {

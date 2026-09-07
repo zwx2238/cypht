@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<phpunit bootstrap="transport-bootstrap.php" cacheDirectory=".phpunit.cache">
+  <testsuites>
+    <testsuite name="mail_transport">
+      <file>./modules/site/Hm_Test_Mail_Transport.php</file>
+    </testsuite>
+  </testsuites>
+</phpunit>

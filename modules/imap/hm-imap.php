@@ -102,8 +102,8 @@ if (!class_exists('Hm_IMAP')) {
         public $max_read = false;
 
         /* SSL connection knobs */
-        public $verify_peer_name = false;
-        public $verify_peer = false;
+        public $verify_peer_name = true;
+        public $verify_peer = true;
 
         /* IMAP server IP address or hostname */
         public $server = '127.0.0.1';
@@ -271,8 +271,14 @@ if (!class_exists('Hm_IMAP')) {
          */
         public function authenticate($username, $password) {
             $this->get_capability();
-            if (!$this->tls) {
-                $this->starttls();
+            if (!$this->tls && !$this->starttls()) {
+                $this->con_error_msg = 'Unable to establish a verified TLS connection to the IMAP server';
+                $this->debug[] = $this->con_error_msg;
+                if (is_resource($this->handle)) {
+                    fclose($this->handle);
+                }
+                $this->state = 'disconnected';
+                return false;
             }
             $scramMechanisms = [
                 'scram-sha-1', 'scram-sha-1-plus',
@@ -352,7 +358,7 @@ if (!class_exists('Hm_IMAP')) {
 
         /**
          * attempt starttls
-         * @return void
+         * @return bool true only after a successful TLS handshake
          */
         public function starttls() {
             if ($this->is_supported('STARTTLS')) {
@@ -362,7 +368,11 @@ if (!class_exists('Hm_IMAP')) {
                 if (!empty($response)) {
                     $end = array_pop($response);
                     if (mb_substr($end, 0, mb_strlen('A'.$this->command_count.' OK')) == 'A'.$this->command_count.' OK') {
-                        Hm_Functions::stream_socket_enable_crypto($this->handle, get_tls_stream_type());
+                        if (Hm_Functions::stream_socket_enable_crypto($this->handle, get_tls_stream_type()) === true) {
+                            $this->get_capability();
+                            return true;
+                        }
+                        $this->debug[] = 'STARTTLS handshake failed';
                     }
                     else {
                         $this->debug[] = 'Unexpected results from STARTTLS: '.implode(' ', $response);
@@ -372,6 +382,7 @@ if (!class_exists('Hm_IMAP')) {
                     $this->debug[] = 'No response from STARTTLS command';
                 }
             }
+            return false;
         }
 
         /* ------------------ UNSELECTED STATE COMMANDS ------------------------ */

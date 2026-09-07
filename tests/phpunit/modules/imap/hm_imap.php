@@ -493,6 +493,7 @@ class Hm_Test_Hm_IMAP extends TestCase {
      */
     public function test_coremail_identifies_client_after_authentication() {
         $this->reset();
+        $this->config['tls'] = true;
         Fake_IMAP_Server::$custom_responses['A3 CAPABILITY'] =
             "* CAPABILITY IMAP4rev1 ID X-CM-EXT-1\r\nA3 OK CAPABILITY completed\r\n";
         $this->connect();

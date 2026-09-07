@@ -268,6 +268,13 @@ class Hm_Test_Local_Agent_Site extends TestCase {
         }
     }
 
+    public function test_native_forms_preserve_same_origin_without_external_referrers() {
+        $header = new Hm_Output_header_start(['router_login_state' => true], []);
+        $html = $header->output_content('Hm_Format_HTML5', ['interface_lang' => 'en']);
+        $this->assertStringContainsString('<meta name="referrer" content="same-origin" />', $html);
+        $this->assertStringNotContainsString('content="no-referrer"', $html);
+    }
+
     public function test_managed_session_does_not_record_unsaved_settings() {
         $session = new Local_Agent_Session($this->site_config(), Local_Agent_Auth::class);
         $session->record_unsaved('IMAP server added');

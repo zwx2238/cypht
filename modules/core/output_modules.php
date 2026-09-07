@@ -408,7 +408,7 @@ class Hm_Output_header_start extends Hm_Output_Module {
             '<meta name="theme-color" content="#888888" /><meta charset="utf-8" />';
 
         if ($this->get('router_login_state')) {
-            $res .= '<meta name="referrer" content="no-referrer" />';
+            $res .= '<meta name="referrer" content="same-origin" />';
         }
         return $res;
     }
