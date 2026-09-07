@@ -1,8 +1,8 @@
-function applyServersPageHandlers() {
+function applyServersPageHandlers(routeParams, hash) {
     $('.server_section').on("click", function() { return Hm_Utils.toggle_page_section($(this).data('target')); });
     $('.edit_server_connection').on('click', imap_smtp_edit_action);
     // NUX
-    expand_server_settings();
+    expand_server_settings(hash);
     $('.nux_next_button').on("click", nux_service_select);
     $('#service_select').on("change", function() {
         if ($(this).val() == 'all-inkl') {

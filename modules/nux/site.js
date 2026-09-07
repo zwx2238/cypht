@@ -98,15 +98,14 @@ var nux_service_select = function() {
     }
 };
 
-var expand_server_settings = function() {
+var expand_server_settings = function(hash = window.location.hash.substring(1)) {
     var dsp;
     var i;
-    var hash = window.location.hash;
-    var sections = ['.feeds_section', '.quick_add_section', '.server_config_section'];
+    var sections = ['.feeds_section', '.quick_add_section', '.server_config_section', '.ews_server_config_section'];
     for (i=0;i<sections.length;i++) {
         dsp = Hm_Utils.get_from_local_storage(sections[i]);
         if (hash) {
-            if (hash.replace('#', '.') != sections[i]) {
+            if ('.' + hash != sections[i]) {
                 dsp = 'none';
             }
             else {

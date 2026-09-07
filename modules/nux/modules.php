@@ -627,7 +627,10 @@ class Hm_Output_end_welcome_dialog extends Hm_Output_Module {
                 continue;
             }
 
-            $section = in_array($proto, ['imap', 'smtp']) ? 'server_config' : $proto;
+            $section = in_array($proto, ['imap', 'jmap', 'smtp']) ? 'server_config' : $proto;
+            if ($proto === 'ews') {
+                $section = 'ews_server_config';
+            }
             if ($server_data[$proto] === NULL) {
                 $res .= sprintf($this->trans('%s services are not enabled for this site. Sorry about that!'), mb_strtoupper($proto_dsp));
             }

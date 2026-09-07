@@ -8,7 +8,13 @@ output_source('site');
 replace_module('output', 'header_content', 'local_agent_header_content');
 replace_module('output', 'login', 'local_agent_managed_login');
 replace_module('output', 'folder_list_content_end', 'local_agent_folder_list_content_end');
-replace_module('handler', 'load_user_data', 'local_agent_load_user_data');
+/* Preserve the load_user_data anchor used by deferred protocol initializers. */
+add_module_to_all_pages('handler', 'local_agent_load_user_data', true, 'site', 'load_user_data', 'before');
+foreach (Hm_Handler_Modules::dump() as $page => $handlers) {
+    if (strpos($page, 'ajax_') === 0 && isset($handlers['load_user_data'])) {
+        add_handler($page, 'local_agent_load_user_data', true, 'site', 'load_user_data', 'before');
+    }
+}
 replace_module('handler', 'version_upgrade_checker', 'local_agent_version_upgrade_checker');
 foreach (array_keys(Hm_Output_Modules::dump()) as $page) {
     Hm_Output_Modules::del($page, 'save_reminder');

@@ -241,6 +241,33 @@ class Hm_Test_Local_Agent_Site extends TestCase {
         }
     }
 
+    public function test_protocol_account_links_target_existing_server_sections() {
+        require_once APP_PATH.'modules/nux/modules.php';
+        foreach ([0, 1] as $count) {
+            $welcome = new Hm_Output_end_welcome_dialog([
+                'page_param_name' => 'page',
+                'tzone' => 'Asia/Shanghai',
+                'nux_server_setup' => array_fill_keys(['imap', 'jmap', 'smtp', 'ews', 'feeds', 'profiles'], $count),
+            ], []);
+            $html = $welcome->output_content('Hm_Format_HTML5', [
+                'interface_lang' => 'en', 'interface_direction' => 'ltr',
+            ]);
+            $start = new Hm_Output_start_welcome_dialog(['page_param_name' => 'page'], []);
+            $html = $start->output_content('Hm_Format_HTML5', [
+                'interface_lang' => 'en', 'interface_direction' => 'ltr',
+            ]).$html;
+            $document = new DOMDocument();
+            $document->loadHTML($html);
+            $xpath = new DOMXPath($document);
+            foreach (['imap', 'jmap', 'smtp', 'ews'] as $protocol) {
+                $link = $xpath->query('//li[contains(concat(" ", @class, " "), " nux_'.$protocol.' ")]/a')->item(0);
+                $this->assertNotNull($link);
+                $section = $protocol === 'ews' ? 'ews_server_config' : 'server_config';
+                $this->assertSame('?page=servers#'.$section.'_section', $link->getAttribute('href'));
+            }
+        }
+    }
+
     public function test_managed_session_does_not_record_unsaved_settings() {
         $session = new Local_Agent_Session($this->site_config(), Local_Agent_Auth::class);
         $session->record_unsaved('IMAP server added');
@@ -256,6 +283,72 @@ class Hm_Test_Local_Agent_Site extends TestCase {
         $output = $handler->module_output();
         $this->assertFalse($output['need_upgrade']);
         $this->assertSame(CYPHT_VERSION, $output['latest_version']);
+    }
+
+    public function test_managed_refresh_updates_stale_session_before_core_loading() {
+        $settings = new Local_Agent_User_Config($this->site_config());
+        $settings->reload(['version' => VERSION, 'imap_servers' => [], 'smtp_servers' => [], 'feeds' => []]);
+        $parent = build_parent_mock();
+        $parent->user_config = new Local_Agent_User_Config($this->site_config());
+        $parent->session->set('username', $this->username);
+        $parent->session->set('user_data', $settings->dump());
+        $parent->request->server['REQUEST_URI'] = '/?page=servers';
+        $settings->set('imap_servers', ['phone' => [
+            'id' => 'phone', 'server' => 'imap.phone.test', 'pass' => 'mailbox-secret',
+        ]]);
+
+        $refresh = new Hm_Handler_local_agent_load_user_data($parent, 'servers');
+        $refresh->process();
+        $core = new Hm_Handler_load_user_data(
+            $parent, 'servers', $refresh->module_output(), $refresh->output_protected()
+        );
+        $core->process();
+        $this->assertSame('imap.phone.test', $parent->user_config->get('imap_servers')['phone']['server']);
+        $this->assertSame($parent->user_config->dump(), $parent->session->get('user_data'));
+        $this->assertFalse($core->module_output()['warn_for_unsaved_changes']);
+        $this->assertFalse($core->module_output()['no_password_save']);
+    }
+
+    /**
+     * @preserveGlobalState disabled
+     * @runInSeparateProcess
+     */
+    public function test_managed_module_graph_initializes_repositories_before_account_handlers() {
+        $environment = (new Symfony\Component\Dotenv\Dotenv())->parse(
+            file_get_contents(APP_PATH.'docker/.env.local-agent')
+        );
+        Hm_Handler_Modules::load([]);
+        Hm_Output_Modules::load([]);
+        foreach (explode(',', $environment['CYPHT_MODULES']) as $module) {
+            $setup = APP_PATH.'modules/'.$module.'/setup.php';
+            if (is_readable($setup)) {
+                require $setup;
+            }
+        }
+        Hm_Handler_Modules::try_queued_modules();
+        Hm_Handler_Modules::process_all_page_queue();
+        Hm_Handler_Modules::try_queued_modules();
+
+        foreach (['servers', 'ajax_nux_service_select', 'ajax_nux_add_service', 'compose'] as $page) {
+            $handlers = array_keys(Hm_Handler_Modules::get_for_page($page));
+            $this->assertContains('load_user_data', $handlers, $page.' missing load_user_data');
+            $load = array_search('load_user_data', $handlers, true);
+            $refresh = array_search('local_agent_load_user_data', $handlers, true);
+            $this->assertNotFalse($refresh, $page.' missing managed refresh');
+            $this->assertLessThan($load, $refresh);
+            if ($page === 'ajax_nux_service_select') {
+                continue;
+            }
+            foreach (['imap', 'smtp'] as $protocol) {
+                $init = array_search('load_'.$protocol.'_servers_from_config', $handlers, true);
+                $this->assertNotFalse($init, $page.' missing '.$protocol.' initialization');
+                $this->assertGreaterThan($load, $init);
+                $save = array_search('save_'.$protocol.'_servers', $handlers, true);
+                if ($save !== false) {
+                    $this->assertLessThan($save, $init);
+                }
+            }
+        }
     }
 
     public function tearDown(): void {

@@ -104,6 +104,7 @@ COPY tests/ tests/
 COPY third_party/ third_party/
 COPY index.php index.php
 COPY docker/.env.local-agent .env
+COPY docker/.env.local-agent docker/.env.local-agent
 COPY .env.test.example .env.test
 
 CMD ["vendor/bin/phpunit", "-c", "tests/phpunit/phpunit.xml"]
