@@ -5,6 +5,7 @@ if (!defined('DEBUG_MODE')) { die(); }
 handler_source('site');
 output_source('site');
 
+replace_module('output', 'header_content', 'local_agent_header_content');
 replace_module('output', 'login', 'local_agent_managed_login');
 replace_module('output', 'folder_list_content_end', 'local_agent_folder_list_content_end');
 replace_module('handler', 'load_user_data', 'local_agent_load_user_data');

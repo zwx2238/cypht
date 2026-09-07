@@ -9,6 +9,17 @@
 if (!defined('DEBUG_MODE')) { die(); }
 
 /**
+ * The gateway removes the public prefix before forwarding requests to Cypht.
+ * Keep relative links, scripts and AJAX requests inside the Mail service.
+ */
+class Hm_Output_local_agent_header_content extends Hm_Output_header_content {
+    protected function output() {
+        $this->out('router_url_path', '/services/mail/', false);
+        return parent::output();
+    }
+}
+
+/**
  * @subpackage site/handler
  */
 class Hm_Handler_site_http_headers extends Hm_Handler_Module {

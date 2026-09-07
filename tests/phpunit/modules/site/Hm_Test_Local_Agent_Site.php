@@ -224,6 +224,23 @@ class Hm_Test_Local_Agent_Site extends TestCase {
         $this->assertStringContainsString('update_message_list', $html);
     }
 
+    public function test_managed_document_keeps_links_and_assets_under_the_mail_prefix() {
+        foreach (['home', 'servers', 'compose', 'settings'] as $page) {
+            $header = new Hm_Output_local_agent_header_content([
+                'router_url_path' => '/',
+                'router_login_state' => true,
+                'router_page_name' => $page,
+            ], []);
+            $html = $header->output_content('Hm_Format_HTML5', [
+                'interface_lang' => 'en',
+                'interface_direction' => 'ltr',
+            ]);
+            $this->assertStringContainsString('<base href="/services/mail/"', $html);
+            $this->assertStringNotContainsString('<base href="/"', $html);
+            $this->assertStringContainsString('<title>'.ucfirst($page).'</title>', $html);
+        }
+    }
+
     public function test_managed_session_does_not_record_unsaved_settings() {
         $session = new Local_Agent_Session($this->site_config(), Local_Agent_Auth::class);
         $session->record_unsaved('IMAP server added');
