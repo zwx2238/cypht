@@ -195,7 +195,7 @@ class Hm_Handler_process_nux_add_service extends Hm_Handler_Module {
                     'pass' => $form['nux_pass'],
 		    'type' => $details['type']
                 );
-                if ($details['sieve'] && $this->module_is_supported('sievefilters') && $this->user_config->get('enable_sieve_filter_setting', DEFAULT_ENABLE_SIEVE_FILTER)) {
+                if (!empty($details['sieve']) && $this->module_is_supported('sievefilters') && $this->user_config->get('enable_sieve_filter_setting', DEFAULT_ENABLE_SIEVE_FILTER)) {
                     $imap_list['sieve_config_host'] = $details['sieve']['host'].':'.$details['sieve']['port'];
                     $imap_list['sieve_tls'] = $details['sieve']['tls'];
                 }
@@ -523,6 +523,11 @@ class Hm_Output_filter_service_select extends Hm_Output_Module {
             if (array_key_exists('auth', $details) && $details['auth'] == 'oauth2') {
                 $this->out('nux_service_step_two',  oauth2_form($details, $this));
             }
+            elseif (($details['auth'] ?? false) === 'oauth2_unconfigured') {
+                $this->out('nux_service_step_two', '<div class="alert alert-warning" role="status">'.
+                    $this->trans('OAuth application is not configured for this provider.').'</div>'.
+                    '<a href="" class="reset_nux_form btn btn-sm btn-secondary">'.$this->trans('Reset').'</a>');
+            }
             else {
                 $this->out('nux_service_step_two',  credentials_form($details, $this));
             }
@@ -717,7 +722,7 @@ class Nux_Quick_Services {
         $services = array_keys(config('oauth2'));
         foreach ($services as $service) {
             $vals = $config->get($service, []);
-            if (!empty($vals)) {
+            if (self::exists($service) && nux_oauth2_configured($vals)) {
                 self::$services[$service]['auth'] = 'oauth2';
                 self::$services[$service]['client_id'] = $vals['client_id'];
                 self::$services[$service]['client_secret'] = $vals['client_secret'];

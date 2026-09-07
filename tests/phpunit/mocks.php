@@ -211,6 +211,7 @@ class Hm_Mock_Request {
     }
 }
 class Fake_Server {
+    public $context;
     protected $position;
     protected $response = '';
     public $command_responses = array();

@@ -70,6 +70,9 @@
     <testsuite name="oauth2">
       <file>./oauth2.php</file>
     </testsuite>
+    <testsuite name="modules_nux">
+      <file>./modules/nux/services.php</file>
+    </testsuite>
     <testsuite name="module">
       <file>./module.php</file>
     </testsuite>

@@ -12,12 +12,44 @@ if (!defined('DEBUG_MODE')) { die(); }
  * @subpackage nux/services
  */
 
+Nux_Quick_Services::add('qq', array(
+    'server' => 'imap.qq.com',
+    'type' => 'imap',
+    'tls' => true,
+    'port' => 993,
+    'name' => 'QQ Mail',
+    'auth' => 'login',
+    'credential_label' => 'Authorization code',
+    'smtp' => array(
+        'server' => 'smtp.qq.com',
+        'port' => 465,
+        'tls' => true
+    )
+));
+
+Nux_Quick_Services::add('163', array(
+    'server' => 'imap.163.com',
+    'type' => 'imap',
+    'tls' => true,
+    'port' => 993,
+    'name' => '163 Mail',
+    'auth' => 'login',
+    'credential_label' => 'Authorization code',
+    'smtp' => array(
+        'server' => 'smtp.163.com',
+        'port' => 465,
+        'tls' => true
+    )
+));
+
 Nux_Quick_Services::add('gmail', array(
     'server' => 'imap.gmail.com',
     'type' => 'imap',
     'tls' => true,
     'port' => 993,
     'name' => 'Gmail',
+    'auth' => 'login',
+    'credential_label' => 'App password',
     'scope' => 'https://www.googleapis.com/auth/contacts.readonly https://mail.google.com/',
     'smtp' => array(
         'server' => 'smtp.gmail.com',
@@ -46,6 +78,7 @@ Nux_Quick_Services::add('outlook', array(
     'tls' => true,
     'port' => 993,
     'name' => 'Outlook.com',
+    'auth' => 'oauth2_unconfigured',
     'scope' => 'offline_access https://outlook.office.com/IMAP.AccessAsUser.All https://outlook.office.com/SMTP.Send',
     'smtp' => array(
         'server' => 'smtp.office365.com',
@@ -60,6 +93,7 @@ Nux_Quick_Services::add('office365', array(
     'tls' => true,
     'port' => 993,
     'name' => 'Office365',
+    'auth' => 'oauth2_unconfigured',
     'scope' => 'offline_access https://outlook.office.com/IMAP.AccessAsUser.All https://outlook.office.com/SMTP.Send',
     'smtp' => array(
         'server' => 'smtp.office365.com',

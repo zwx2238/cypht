@@ -89,11 +89,22 @@ function valid_nux_oauth2_state($expected, $provided) {
 /**
  * @subpackage nux/functions
  */
+if (!hm_exists('nux_oauth2_configured')) {
+function nux_oauth2_configured($values) {
+    foreach (['client_id', 'client_secret', 'client_uri', 'auth_uri', 'token_uri', 'refresh_uri'] as $key) {
+        if (!isset($values[$key]) || !is_string($values[$key]) || trim($values[$key]) === '') {
+            return false;
+        }
+    }
+    return true;
+}}
+
 if (!hm_exists('oauth2_form')) {
     function oauth2_form($details, $mod)
     {
         $state = $details['oauth_state'] ?? false;
-        if (!is_string($state) || preg_match('/^[a-f0-9]{64}$/D', $state) !== 1) {
+        if (!is_string($state) || preg_match('/^[a-f0-9]{64}$/D', $state) !== 1 ||
+            !nux_oauth2_configured(array_merge($details, ['client_uri' => $details['redirect_uri'] ?? '']))) {
             return '';
         }
         $oauth2 = new Hm_Oauth2($details['client_id'], $details['client_secret'], $details['redirect_uri']);
@@ -114,10 +125,10 @@ if (!hm_exists('oauth2_form')) {
 if (!hm_exists('credentials_form')) {
     function credentials_form($details, $mod)
     {
+        $credential_label = $mod->trans($details['credential_label'] ?? 'E-mail Password');
         $res = '<input type="hidden" id="nux_service" name="nux_service" value="' . $mod->html_safe($details['id']) . '" />';
         $res .= '<input type="hidden" name="nux_name" class="nux_name" value="' . $mod->html_safe($details['name']) . '" />';
         $res .= '<div class="nux_step_two_title"><b>' . $mod->html_safe($details['name']) . '</b></div>';
-        $res .= $mod->trans('Enter your password for this E-mail provider to complete the connection process');
 
         $res .= '<div class="row"><div class="col col-lg-4">';
         // E-mail Address Field
@@ -127,8 +138,8 @@ if (!hm_exists('credentials_form')) {
 
         // E-mail Password Field
         $res .= '<div class="form-floating mb-3">';
-        $res .= '<input type="password" class="form-control nux_password" id="nux_password" name="nux_password" placeholder="' . $mod->trans('E-Mail Password') . '">';
-        $res .= '<label for="nux_password">' . $mod->trans('E-mail Password') . '</label></div>';
+        $res .= '<input type="password" class="form-control nux_password" id="nux_password" name="nux_password" autocomplete="new-password" placeholder="' . $mod->html_safe($credential_label) . '">';
+        $res .= '<label for="nux_password">' . $mod->html_safe($credential_label) . '</label></div>';
         $res .= '<div class="d-flex flex-md-row gap-3 mt-3">';
         // Connect Button
         $res .= '<input type="button" class="nux_submit px-5 btn btn-primary w-100 w-md-auto" value="' . $mod->trans('Connect') . '">';

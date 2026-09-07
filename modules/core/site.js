@@ -2709,6 +2709,7 @@ function getServiceDetails(providerKey){
 
 function getEmailProviderKey(email) {
     const emailProviderMap = {
+        "163": ["163.com"],
         "all-inkl": ["all-inkl.de", "all-inkl.com"],
         "aol": ["aol.com"],
         "fastmail": ["fastmail.com"],
@@ -2724,19 +2725,20 @@ function getEmailProviderKey(email) {
         "office365": ["office365.com"],
         "outlook": ["outlook.com", "outlook.fr"],
         "postale": ["postale.io"],
+        "qq": ["qq.com", "foxmail.com"],
         "yahoo": ["yahoo.com", "yahoo.fr"],
         "yandex": ["yandex.com", "yandex.ru"],
         "zoho": ["zoho.com"]
     };
 
-    const emailParts = email.split("@");
+    const emailParts = email.trim().split("@");
 
     if(emailParts.length !== 2) return "";
 
     const provider = emailParts[1].toLowerCase();
 
     for (const providerKey in emailProviderMap) {
-        if (emailProviderMap[providerKey].some(p => p.includes(provider))) {
+        if (emailProviderMap[providerKey].includes(provider)) {
             return providerKey;
         }
     }
@@ -2833,4 +2835,3 @@ window.addEventListener('page-change', () => {
         $("#cypht-upgrade-alert").addClass("hide");
     }
 })
-
